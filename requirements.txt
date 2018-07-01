@@ -1,0 +1,6 @@
+pandas
+numpy
+pika
+bokeh
+ujson
+redis
