@@ -12,3 +12,4 @@ wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc | sudo apt-ke
 sudo apt-get update
 sudo apt-get install rabbitmq-server
 sudo apt-get install redis-server
+sudo apt-get install build-essential
