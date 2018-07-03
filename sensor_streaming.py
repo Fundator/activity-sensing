@@ -13,7 +13,8 @@ r = redis.Redis(host='localhost', port=6379, db=0)
 data = ColumnDataSource(dict(time=[], value=[], sensor=[], x=[], y=[],z=[]))
 
 i = 0
-update_freq = 100 # ms
+squat_prob = 0.
+update_freq = 50 # ms
 
 hover = HoverTool(tooltips=[
     ("Time", "@time"),
@@ -25,11 +26,6 @@ value_plot = figure(plot_width=800,
                     tools=[hover],
                     title="Sensor streaming")
 
-value_plot.line(source=data, x='time', y='value')
-value_plot.xaxis.axis_label = "Time [ms]"
-value_plot.yaxis.axis_label = "Value"
-value_plot.title.text = "Sensor: "
-
 sensormenu = [("accelerometer", "accelerometer"), ("gyroscope", "gyroscope"),("magnetic field", "magnetic field")]
 sensordict = {"accelerometer":3, "gyroscope":4, "magnetic field":5}
 sensordropdown = Dropdown(label="Sensor", menu=sensormenu, default_value="accelerometer")
@@ -37,16 +33,13 @@ sensordropdown = Dropdown(label="Sensor", menu=sensormenu, default_value="accele
 menu = [("x", "x"), ("y", "y"),("z", "z")]
 dropdown = Dropdown(label="Measurement", menu=menu, default_value="x")
 
+value_plot.line(source=data, x='time', y='value')
+value_plot.xaxis.axis_label = "Time [ms]"
+value_plot.yaxis.axis_label = "Value"
+
 def update_dropdown(attr, old, new):
     data.data = dict(time=[], value=[], sensor=[], x=[], y=[],z=[])
     global i
-    i = 0
-    return
-
-def update_sensor(attr, old, new):
-    value_plot.title.text = "Sensor: " + sensordropdown.value + " Measurement: " + dropdown.value
-    data.data = dict(time=[], value=[], sensor=[], x=[], y=[],z=[])
-    global i 
     i = 0
     return
 
@@ -57,6 +50,9 @@ def update_value():
 
 def get_last_values(measure):
     global i
+    global squat_prob
+    squat_prob = r.get("squat_prob")
+    value_plot.title.text = "Squat probability: " + str(float(squat_prob))
     df = pd.read_msgpack(r.get("sensor"+str(sensordict[sensordropdown.value]))) if sensordropdown.value else  pd.read_msgpack(r.get("sensor3"))
     df["value"] = df[dropdown.value] if dropdown.value else df.x
     df["time"] = np.arange(update_freq*i,(i+len(df))*update_freq, update_freq)
