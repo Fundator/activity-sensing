@@ -5,7 +5,7 @@ Streaming sensor data from Android phone via local proxy to server in cloud, tha
 <br><br>
 ![Imgur](https://i.imgur.com/0qe2d7I.jpg)
 
-<br>  
+<br>
 ## The following programs must run for the application to work:  
 ### On the mobile
 Download the app "Sensorstream IMU+GPS" from Google Play. 
