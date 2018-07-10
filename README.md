@@ -21,6 +21,8 @@ Listens on the RabbitMQ channel and write the streaming data to a Redis DB.
 It also writes a selected window of all the sensors that is used for prediction.
 - `prep_and_predict.py`
 This reads the most recent data from the Redis DB, prep it a little bit, and send to the Deep Learning API for prediction output. 
+- `bokeh serve sensor_streaming_multiple.py --allow-websocket-origin=40.127.197.251:8080 --port 8080`
+This starts the bokeh server, and serves requests on port 8080, showing the webpage of the app.
 
 ### On GPU server
 - `run_keras_server.py`
