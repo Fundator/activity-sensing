@@ -1,33 +1,31 @@
 import pika
 import pandas as pd
 import redis
-from collections import defaultdict
-r = redis.Redis(host='localhost', port=6379, db=0)
 
+# Initialize Redis DB and RabbitMQ connection.
+r = redis.Redis(host='localhost', port=6379, db=0)
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 channel = connection.channel()
-
-
 channel.queue_declare(queue='hello')
 
-received = defaultdict(bool)
-first = True
-min_len = 1e9
-dfs = []
+activity_length = 45
 
 def callback(ch, method, properties, body):
-    #print(" [x] Received msg")
-    df = pd.read_msgpack(body)
-    num_rows = []
+    # Read msgpack as DataFrame.
+    df = pd.read_msgpack(body)    
     for n, g in df.groupby("sensor"):
+        # Set sensor store with last received DataFrame
         sensor = 'sensor'+str(n)
         r.set(sensor,g.to_msgpack())
+        # If sensor store for ml exists
         if r.get(sensor+'_ml') is not None:
+            # Append new measurements to old
             old = pd.read_msgpack(r.get(sensor+'_ml'))
             new = old.append(g, ignore_index=True)
-            #print(new.shape)
-            if len(new)>45:
-                new = new.iloc[-45:]
+            # Chop of only last if longer than activity_length
+            if len(new)>activity_length:
+                new = new.iloc[-activity_length:]
+            # Set new values for sensor store ml
             r.set(sensor+'_ml',new.to_msgpack())
         else:
             r.set(sensor+'_ml',g.to_msgpack())
@@ -37,7 +35,8 @@ channel.basic_consume(callback,
                       no_ack=True)
 
 try:
-    print(' [*] Waiting for messages. To exit press CTRL+C')
+    print(' [*] Receiving messages. To exit press CTRL+C')
     channel.start_consuming()
 except KeyboardInterrupt:
+    # Graceful shutdown.
     connection.close()
